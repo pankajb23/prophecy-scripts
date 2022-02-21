@@ -81,6 +81,21 @@ if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
   retry kubectl apply -f azure-external-dns.yaml
   retry kubectl apply -f wildcard-cluster-issuer.yaml
   retry kubectl apply -f wildcard-certificate.yaml
+
+  cat << EOF > /etc/marketplace/external-dns.patch
+rules:
+- apiGroups: ['']
+  resources: ["services","endpoints","pods"]
+  verbs: ["get","watch","list"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get","watch","list"]
+- apiGroups: ['']
+  resources: ["nodes"]
+  verbs: ["list", "watch"]
+EOF
+
+  retry kubectl patch clusterrole external-dns --patch-file /etc/marketplace/external-dns.patch
 fi
 
 # not adding retry here as create will fail on retry. cannot apply due to CRD size restriction.
