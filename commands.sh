@@ -121,7 +121,7 @@ retry helm upgrade -i cp prophecy/prophecy --version 0.0.1000 -f values_cp.yaml 
 retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.0.1000 -f values_dp.yaml -n dp
 
 
-retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.adminPassword=`echo ${ADMIN_PASSWORD}`
+retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo ${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret
 
 retry helm upgrade -i -n cp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
 
