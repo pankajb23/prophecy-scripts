@@ -53,6 +53,7 @@ retry helm repo add kiwigrid https://kiwigrid.github.io
 retry helm repo add prophecy http://simpledatalabsinc.github.io/prophecy
 retry helm repo add elastic https://helm.elastic.co
 retry helm repo add grafana https://grafana.github.io/helm-charts
+retry helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
   eval "echo \"$(cat azure-dns-secret-tpl.yaml)\"" > azure-dns-secret.yaml
@@ -103,7 +104,9 @@ fi
 kubectl create -f `pwd`/crds
 
 kubectl create ns cp
+kubectl label namespace cp owner=prophecy
 kubectl create ns dp
+kubectl label namespace dp owner=prophecy
 
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "True" ]; then
@@ -142,6 +145,23 @@ retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/release
 
 retry kubectl create namespace platform
 
-retry helm upgrade --install loki grafana/loki-stack -n platform --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=true,prometheus.server.persistentVolume.size=100Gi,prometheus.server.persistentVolume.storageClass=default,loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=100Gi,grafana.adminPassword=admin
+cat << EOF > /etc/marketplace/values_prometheus.yaml
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: default
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector:
+      matchLabels:
+        owner: prophecy
+EOF
 
+retry helm install prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml
 
+retry helm upgrade --install loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi
