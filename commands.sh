@@ -117,8 +117,8 @@ retry kubectl apply -f image-pull-secret.yaml -n dp
 eval "echo \"$(cat values_cp_tpl.yaml )\"" > values_cp.yaml
 eval "echo \"$(cat values_dp_tpl.yaml )\"" > values_dp.yaml
 
-retry helm upgrade -i cp prophecy/prophecy --version 0.0.1000 -f values_cp.yaml -n cp
-retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.0.1000 -f values_dp.yaml -n dp
+retry helm upgrade -i cp prophecy/prophecy --version 0.14.3 -f values_cp.yaml -n cp
+retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.14.3 -f values_dp.yaml -n dp
 
 
 retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo prophecy.${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret
