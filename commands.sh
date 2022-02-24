@@ -143,7 +143,7 @@ retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --se
 # Installing metrics-server
 retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
 
-retry kubectl create namespace platform
+kubectl create namespace platform
 
 cat << EOF > /etc/marketplace/values_prometheus.yaml
 prometheus:
@@ -162,6 +162,6 @@ prometheus:
         owner: prophecy
 EOF
 
-retry helm install prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml
+retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml
 
-retry helm upgrade --install loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi
+retry helm upgrade -i loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi
