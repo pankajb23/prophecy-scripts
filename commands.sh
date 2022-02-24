@@ -158,9 +158,7 @@ prometheus:
           resources:
             requests:
               storage: 50Gi
-    serviceMonitorSelector:
-      matchLabels:
-        owner: prophecy
+    serviceMonitorSelector: {}
     serviceMonitorNamespaceSelector:
       matchLabels:
         owner: prophecy
