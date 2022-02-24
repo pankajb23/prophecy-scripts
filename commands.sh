@@ -117,6 +117,15 @@ retry kubectl apply -f image-pull-secret.yaml -n dp
 eval "echo \"$(cat values_cp_tpl.yaml )\"" > values_cp.yaml
 eval "echo \"$(cat values_dp_tpl.yaml )\"" > values_dp.yaml
 
+# Updating env logic
+TOTAL_LINES=`wc -l values_cp.yaml | awk '{print $1]'`
+head -n 43 values_cp.yaml > values_cp_temp.yaml
+echo "    SMTP_ENABLED: \"false\"" >> values_cp_temp.yaml
+echo "    METERING_ENABLED: \"true\"" >> values_cp_temp.yaml
+tail -n $(($TOTAL_LINES - 43)) values_cp.yaml >> values_cp_temp.yaml
+mv values_cp_temp.yaml values_cp.yaml
+# Updating env logic
+
 retry helm upgrade -i cp prophecy/prophecy --version 0.14.3 -f values_cp.yaml -n cp
 retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.14.3 -f values_dp.yaml -n dp
 
