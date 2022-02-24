@@ -52,6 +52,7 @@ retry helm repo add stable https://charts.helm.sh/stable
 retry helm repo add kiwigrid https://kiwigrid.github.io
 retry helm repo add prophecy http://simpledatalabsinc.github.io/prophecy
 retry helm repo add elastic https://helm.elastic.co
+retry helm repo add grafana https://grafana.github.io/helm-charts
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
   eval "echo \"$(cat azure-dns-secret-tpl.yaml)\"" > azure-dns-secret.yaml
@@ -135,4 +136,12 @@ retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.
 retry helm upgrade -i -n cp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
 
 retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
+
+# Installing metrics-server
+retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
+
+retry kubectl create namespace platform
+
+retry helm upgrade --install loki grafana/loki-stack -n platform --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=true,prometheus.server.persistentVolume.size=100Gi,prometheus.server.persistentVolume.storageClass=default,loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=100Gi,grafana.adminPassword=admin
+
 
