@@ -126,8 +126,8 @@ tail -n $(($TOTAL_LINES - 43)) values_cp.yaml >> values_cp_temp.yaml
 mv values_cp_temp.yaml values_cp.yaml
 # Updating env logic
 
-retry helm upgrade -i cp prophecy/prophecy --version 0.14.3 -f values_cp.yaml -n cp
-retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.14.3 -f values_dp.yaml -n dp
+retry helm upgrade -i cp prophecy/prophecy --version 0.14.4 -f values_cp.yaml -n cp --set prophecy.enablePathBasedRouting=true
+retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.14.4 -f values_dp.yaml -n dp --set dataplane.enablePathBasedRouting=true
 
 
 retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.tag=0.14.3 --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo prophecy.${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret
