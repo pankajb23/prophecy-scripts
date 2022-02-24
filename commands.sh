@@ -144,6 +144,8 @@ retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --se
 retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
 
 kubectl create namespace platform
+kubectl label namespace platform owner=prophecy
+kubectl label namespaces kube-system owner=prophecy
 
 cat << EOF > /etc/marketplace/values_prometheus.yaml
 prometheus:
