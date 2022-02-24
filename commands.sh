@@ -145,7 +145,6 @@ retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/release
 
 kubectl create namespace platform
 kubectl label namespace platform owner=prophecy
-kubectl label namespaces kube-system owner=prophecy
 
 cat << EOF > /etc/marketplace/values_prometheus.yaml
 prometheus:
