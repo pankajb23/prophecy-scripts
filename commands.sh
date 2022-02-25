@@ -108,6 +108,27 @@ kubectl label namespace cp owner=prophecy
 kubectl create ns dp
 kubectl label namespace dp owner=prophecy
 
+kubectl create namespace platform
+kubectl label namespace platform owner=prophecy
+
+cat << EOF > /etc/marketplace/values_prometheus.yaml
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: default
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector:
+      matchLabels:
+        owner: prophecy
+EOF
+
+retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "True" ]; then
   kubectl create secret tls prophecy-wildcard-tls-secret -n cp --cert=tls.crt --key=tls.key
@@ -142,27 +163,5 @@ retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --se
 
 # Installing metrics-server
 retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
-
-kubectl create namespace platform
-kubectl label namespace platform owner=prophecy
-
-cat << EOF > /etc/marketplace/values_prometheus.yaml
-prometheus:
-  prometheusSpec:
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: default
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 50Gi
-    serviceMonitorSelector: {}
-    serviceMonitorNamespaceSelector:
-      matchLabels:
-        owner: prophecy
-EOF
-
-retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml
 
 retry helm upgrade -i loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi
