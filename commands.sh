@@ -122,7 +122,7 @@ eval "echo \"$(cat values_cp_tpl.yaml )\"" > values_cp.yaml
 eval "echo \"$(cat values_dp_tpl.yaml )\"" > values_dp.yaml
 
 # Updating env logic
-TOTAL_LINES=`wc -l values_cp.yaml | awk '{print $1]'`
+TOTAL_LINES=`wc -l values_cp.yaml | awk '{print $1}'`
 head -n 43 values_cp.yaml > values_cp_temp.yaml
 echo "    SMTP_ENABLED: \"false\"" >> values_cp_temp.yaml
 echo "    METERING_ENABLED: \"true\"" >> values_cp_temp.yaml
