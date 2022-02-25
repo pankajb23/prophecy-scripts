@@ -165,3 +165,7 @@ retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.
 retry helm upgrade -i -n cp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
 
 retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
+
+retry kubelet label servicemonitor cp-metrics -n cp release=prometheus
+
+retry kubelet label servicemonitor dp-metrics -n dp release=prometheus
