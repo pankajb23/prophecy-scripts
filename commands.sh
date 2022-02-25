@@ -130,6 +130,11 @@ EOF
 
 retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml
 
+# Installing metrics-server
+retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
+
+retry helm upgrade -i loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi
+
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "True" ]; then
   kubectl create secret tls prophecy-wildcard-tls-secret -n cp --cert=tls.crt --key=tls.key
   kubectl create secret tls prophecy-wildcard-tls-secret -n dp --cert=tls.crt --key=tls.key
@@ -160,8 +165,3 @@ retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.
 retry helm upgrade -i -n cp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
 
 retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
-
-# Installing metrics-server
-retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
-
-retry helm upgrade -i loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi
