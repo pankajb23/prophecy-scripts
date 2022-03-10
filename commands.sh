@@ -30,6 +30,7 @@ export ADMIN_PASSWORD=`az vm list | jq -r '.[0].tags.secret'`
 export CLUSTERNAME=`az vm list | jq -r '.[0].tags.clusterName'`
 export CLUSTERGROUP=`az vm list | jq -r '.[0].tags.resourceGroup'`
 export CUSTOMER_NAME=`az vm list | jq -r '.[0].tags.clusterName'`
+export INITIAL_USER_COUNT=`az vm list | jq -r '.[0].tags.userCount'`
 export USE_CUSTOMER_PROVIDED_CERTIFICATE=`az vm list | jq -r '.[0].tags.usePrivateCertificate'`
 export KEYVAULT_NAME=`az vm list | jq -r '.[0].tags.keyVaultName'`
 
@@ -149,10 +150,11 @@ eval "echo \"$(cat values_dp_tpl.yaml )\"" > values_dp.yaml
 
 # Updating env logic
 TOTAL_LINES=`wc -l values_cp.yaml | awk '{print $1}'`
-head -n 43 values_cp.yaml > values_cp_temp.yaml
+head -n 60 values_cp.yaml > values_cp_temp.yaml
 echo "    SMTP_ENABLED: \"false\"" >> values_cp_temp.yaml
 echo "    METERING_ENABLED: \"true\"" >> values_cp_temp.yaml
-tail -n $(($TOTAL_LINES - 43)) values_cp.yaml >> values_cp_temp.yaml
+echo "    MIXPANEL_ENABLED: \"true\"" >> values_cp_temp.yaml
+tail -n $(($TOTAL_LINES - 60)) values_cp.yaml >> values_cp_temp.yaml
 mv values_cp_temp.yaml values_cp.yaml
 # Updating env logic
 
