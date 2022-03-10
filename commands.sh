@@ -34,6 +34,10 @@ export INITIAL_USER_COUNT=`az vm list | jq -r '.[0].tags.userCount'`
 export USE_CUSTOMER_PROVIDED_CERTIFICATE=`az vm list | jq -r '.[0].tags.usePrivateCertificate'`
 export KEYVAULT_NAME=`az vm list | jq -r '.[0].tags.keyVaultName'`
 
+if [ ${INITIAL_USER_COUNT} == "" ]; then
+  export INITIAL_USER_COUNT="1"
+fi
+
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "True" ]; then
   retry az keyvault secret show --vault-name ${KEYVAULT_NAME} --name TLSKey | jq -r .value > /etc/marketplace/tls.key
   retry az keyvault secret show --vault-name ${KEYVAULT_NAME} --name TLSCertificate | jq -r .value > /etc/marketplace/tls.crt
