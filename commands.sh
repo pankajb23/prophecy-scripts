@@ -72,16 +72,16 @@ retry helm repo add jetstack https://charts.jetstack.io
 retry helm repo update
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
-  retry helm upgrade -i nginx-ingress stable/nginx-ingress -f values_nginx.yaml --version 1.37.0
-  retry helm upgrade -i secret-replicator kiwigrid/secret-replicator --version 0.5.0 --set secretList=prophecy-wildcard-tls-secret
+  retry helm upgrade -i nginx-ingress stable/nginx-ingress -f values_nginx.yaml --version 1.37.0 --force
+  retry helm upgrade -i secret-replicator kiwigrid/secret-replicator --version 0.5.0 --set secretList=prophecy-wildcard-tls-secret --force
 else
-  retry helm upgrade -i nginx-ingress stable/nginx-ingress --version 1.37.0 -f values_nginx.yaml --set  controller.service.loadBalancerIP=${LOADBALANCER_IP}  --set controller.service.type=LoadBalancer
+  retry helm upgrade -i nginx-ingress stable/nginx-ingress --version 1.37.0 -f values_nginx.yaml --set  controller.service.loadBalancerIP=${LOADBALANCER_IP}  --set controller.service.type=LoadBalancer --force
 fi
-retry helm upgrade -i elasticsearch elastic/elasticsearch --namespace elastic --create-namespace
-retry helm upgrade -i kibana elastic/kibana --namespace elastic --create-namespace
+retry helm upgrade -i elasticsearch elastic/elasticsearch --namespace elastic --create-namespace --force
+retry helm upgrade -i kibana elastic/kibana --namespace elastic --create-namespace --force
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
-  retry helm upgrade -i cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.7.0-alpha.0 --set installCRDs=true --set prometheus.enabled=false --set extraArgs={--dns01-recursive-nameservers-only}
+  retry helm upgrade -i cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.7.0-alpha.0 --set installCRDs=true --set prometheus.enabled=false --set extraArgs={--dns01-recursive-nameservers-only} --force
   retry kubectl apply -f cluster-issuer.yaml
   retry kubectl apply -f azure-dns-secret.yaml
   retry kubectl apply -f azure-dns-secret.yaml -n cert-manager
@@ -133,12 +133,12 @@ prometheus:
         owner: prophecy
 EOF
 
-retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml
+retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml --force
 
 # Installing metrics-server
 retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
 
-retry helm upgrade -i loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi
+retry helm upgrade -i loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi --force
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "True" ]; then
   kubectl create secret tls prophecy-wildcard-tls-secret -n cp --cert=tls.crt --key=tls.key
@@ -162,15 +162,15 @@ tail -n $(($TOTAL_LINES - 60)) values_cp.yaml >> values_cp_temp.yaml
 mv values_cp_temp.yaml values_cp.yaml
 # Updating env logic
 
-retry helm upgrade -i cp prophecy/prophecy --version 0.14.5 -f values_cp.yaml -n cp --set prophecy.enablePathBasedRouting=true --set monitoring.enabled=true
-retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.14.5 -f values_dp.yaml -n dp --set dataplane.enablePathBasedRouting=true --set monitoring.enabled=true
+retry helm upgrade -i cp prophecy/prophecy --version 0.14.5 -f values_cp.yaml -n cp --set prophecy.enablePathBasedRouting=true --set monitoring.enabled=true --force
+retry helm upgrade -i dp prophecy/prophecy-dataplane --version 0.14.5 -f values_dp.yaml -n dp --set dataplane.enablePathBasedRouting=true --set monitoring.enabled=true --force
 
 
 retry helm upgrade -i -n cp athena prophecy/athena --version 0.1.0 --set athena.tag=0.14.6-initial_user_count --set prophecy.userCount=`echo ${INITIAL_USER_COUNT}` --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo prophecy.${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret --force
 
-retry helm upgrade -i -n cp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
+retry helm upgrade -i -n cp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true --force
 
-retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true
+retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true --force
 
 kubectl label servicemonitor cp-metrics -n cp release=prometheus
 
