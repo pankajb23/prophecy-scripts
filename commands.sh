@@ -35,7 +35,7 @@ export USE_CUSTOMER_PROVIDED_CERTIFICATE=`az vm list | jq -r '.[0].tags.usePriva
 export KEYVAULT_NAME=`az vm list | jq -r '.[0].tags.keyVaultName'`
 
 if [ ${INITIAL_USER_COUNT} == "" ]; then
-  export INITIAL_USER_COUNT="1"
+  export INITIAL_USER_COUNT="10"
 fi
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "True" ]; then
