@@ -34,6 +34,8 @@ export INITIAL_USER_COUNT=`az vm list | jq -r '.[0].tags.userCount'`
 export USE_CUSTOMER_PROVIDED_CERTIFICATE=`az vm list | jq -r '.[0].tags.usePrivateCertificate'`
 export KEYVAULT_NAME=`az vm list | jq -r '.[0].tags.keyVaultName'`
 
+# TODO remove hard-coding once we remove 499 plan
+export INITIAL_USER_COUNT="10"
 if [ ${INITIAL_USER_COUNT} == "" ]; then
   export INITIAL_USER_COUNT="10"
 fi
