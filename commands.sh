@@ -174,8 +174,6 @@ retry helm upgrade -i -n cp backup prophecy/prophecy-backup --version 0.0.1 --se
 
 retry helm upgrade -i -n dp backup prophecy/prophecy-backup --version 0.0.1 --set backup.pvc.create=true --force
 
-retry helm upgrade -i federator prophecy/openidfederator --version 1.16.0 -n openidfederator
-
 kubectl label servicemonitor cp-metrics -n cp release=prometheus
 
 kubectl label servicemonitor dp-metrics -n dp release=prometheus
