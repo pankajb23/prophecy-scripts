@@ -165,13 +165,13 @@ tail -n $(($TOTAL_LINES - 60)) values_cp.yaml >> values_cp_temp.yaml
 mv values_cp_temp.yaml values_cp.yaml
 # Updating env logic
 
-retry curl -o prophecy-0.14.8.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-0.14.8.tgz
-retry curl -o prophecy-dataplane-0.14.8.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-dataplane-0.14.8.tgz
+retry curl -o prophecy.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-0.17.10.tgz
+retry curl -o prophecy-dataplane.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-dataplane-0.17.10.tgz
 retry curl -o athena-0.1.0.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/athena-0.1.0.tgz
 retry curl -o prophecy-backup-0.0.1.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-backup-0.0.1.tgz
 
-retry helm upgrade -i cp ./prophecy-0.14.8.tgz -f values_cp.yaml -n cp --set prophecy.enablePathBasedRouting=true --set monitoring.enabled=true --force
-retry helm upgrade -i dp ./prophecy-dataplane-0.14.8.tgz -f values_dp.yaml -n dp --set dataplane.enablePathBasedRouting=true --set monitoring.enabled=true --force
+retry helm upgrade -i cp ./prophecy.tgz -f values_cp.yaml -n cp --set prophecy.enablePathBasedRouting=true --set monitoring.enabled=true --force
+retry helm upgrade -i dp ./prophecy-dataplane.tgz -f values_dp.yaml -n dp --set dataplane.enablePathBasedRouting=true --set monitoring.enabled=true --force
 
 
 retry helm upgrade -i -n cp athena ./athena-0.1.0.tgz --set athena.tag=0.14.7 --set prophecy.userCount=`echo ${INITIAL_USER_COUNT}` --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo prophecy.${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret --force
