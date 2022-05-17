@@ -159,6 +159,8 @@ head -n 60 values_cp.yaml > values_cp_temp.yaml
 echo "    SMTP_ENABLED: \"false\"" >> values_cp_temp.yaml
 echo "    METERING_ENABLED: \"true\"" >> values_cp_temp.yaml
 echo "    MIXPANEL_ENABLED: \"true\"" >> values_cp_temp.yaml
+echo "    SEARCH_ENABLED: \"true\"" >> values_cp_temp.yaml
+echo "    ENABLE_SEARCH_BOOTSTRAP: \"true\"" >> values_cp_temp.yaml
 tail -n $(($TOTAL_LINES - 60)) values_cp.yaml >> values_cp_temp.yaml
 mv values_cp_temp.yaml values_cp.yaml
 # Updating env logic
