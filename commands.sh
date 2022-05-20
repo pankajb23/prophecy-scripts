@@ -59,6 +59,7 @@ retry helm repo add stable https://charts.helm.sh/stable
 retry helm repo add kiwigrid https://kiwigrid.github.io
 retry helm repo add elastic https://helm.elastic.co
 retry helm repo add grafana https://grafana.github.io/helm-charts
+retry helm repo add prophecy https://prophecy-chart.s3.amazonaws.com
 retry helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
@@ -72,113 +73,113 @@ fi
 retry helm repo add jetstack https://charts.jetstack.io
 retry helm repo update
 
-if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
-  retry helm upgrade -i nginx-ingress stable/nginx-ingress -f values_nginx.yaml --version 1.37.0 --force
-  retry helm upgrade -i secret-replicator kiwigrid/secret-replicator --version 0.5.0 --set secretList=prophecy-wildcard-tls-secret --force
-else
-  retry helm upgrade -i nginx-ingress stable/nginx-ingress --version 1.37.0 -f values_nginx.yaml --set  controller.service.loadBalancerIP=${LOADBALANCER_IP}  --set controller.service.type=LoadBalancer --force
-fi
-retry helm upgrade -i elasticsearch elastic/elasticsearch --namespace elastic --create-namespace --force
-retry helm upgrade -i kibana elastic/kibana --namespace elastic --create-namespace --force
+# if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
+#   retry helm upgrade -i nginx-ingress stable/nginx-ingress -f values_nginx.yaml --version 1.37.0 --force
+#   retry helm upgrade -i secret-replicator kiwigrid/secret-replicator --version 0.5.0 --set secretList=prophecy-wildcard-tls-secret --force
+# else
+#   retry helm upgrade -i nginx-ingress stable/nginx-ingress --version 1.37.0 -f values_nginx.yaml --set  controller.service.loadBalancerIP=${LOADBALANCER_IP}  --set controller.service.type=LoadBalancer --force
+# fi
+# retry helm upgrade -i elasticsearch elastic/elasticsearch --namespace elastic --create-namespace --force
+# retry helm upgrade -i kibana elastic/kibana --namespace elastic --create-namespace --force
 
-if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
-  retry helm upgrade -i cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.7.0-alpha.0 --set installCRDs=true --set prometheus.enabled=false --set extraArgs={--dns01-recursive-nameservers-only} --force
-  retry kubectl apply -f cluster-issuer.yaml
-  retry kubectl apply -f azure-dns-secret.yaml
-  retry kubectl apply -f azure-dns-secret.yaml -n cert-manager
-  retry kubectl apply -f azure-external-dns.yaml
-  retry kubectl apply -f wildcard-cluster-issuer.yaml
-  retry kubectl apply -f wildcard-certificate.yaml
+# if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "False" ]; then
+#   retry helm upgrade -i cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.7.0-alpha.0 --set installCRDs=true --set prometheus.enabled=false --set extraArgs={--dns01-recursive-nameservers-only} --force
+#   retry kubectl apply -f cluster-issuer.yaml
+#   retry kubectl apply -f azure-dns-secret.yaml
+#   retry kubectl apply -f azure-dns-secret.yaml -n cert-manager
+#   retry kubectl apply -f azure-external-dns.yaml
+#   retry kubectl apply -f wildcard-cluster-issuer.yaml
+#   retry kubectl apply -f wildcard-certificate.yaml
 
-  cat << EOF > /etc/marketplace/external-dns.patch
-rules:
-- apiGroups: ['']
-  resources: ["services","endpoints","pods"]
-  verbs: ["get","watch","list"]
-- apiGroups: ["networking.k8s.io"]
-  resources: ["ingresses"]
-  verbs: ["get","watch","list"]
-- apiGroups: ['']
-  resources: ["nodes"]
-  verbs: ["list", "watch"]
-EOF
+#   cat << EOF > /etc/marketplace/external-dns.patch
+# rules:
+# - apiGroups: ['']
+#   resources: ["services","endpoints","pods"]
+#   verbs: ["get","watch","list"]
+# - apiGroups: ["networking.k8s.io"]
+#   resources: ["ingresses"]
+#   verbs: ["get","watch","list"]
+# - apiGroups: ['']
+#   resources: ["nodes"]
+#   verbs: ["list", "watch"]
+# EOF
 
-  retry kubectl patch clusterrole external-dns --patch-file /etc/marketplace/external-dns.patch
-fi
+#   retry kubectl patch clusterrole external-dns --patch-file /etc/marketplace/external-dns.patch
+# fi
 
-# not adding retry here as create will fail on retry. cannot apply due to CRD size restriction.
-kubectl create -f `pwd`/crds
+# # not adding retry here as create will fail on retry. cannot apply due to CRD size restriction.
+# kubectl create -f `pwd`/crds
 
-kubectl create ns cp
-kubectl label namespace cp owner=prophecy
-kubectl create ns dp
-kubectl label namespace dp owner=prophecy
+# kubectl create ns cp
+# kubectl label namespace cp owner=prophecy
+# kubectl create ns dp
+# kubectl label namespace dp owner=prophecy
 
-kubectl create namespace platform
-kubectl label namespace platform owner=prophecy
+# kubectl create namespace platform
+# kubectl label namespace platform owner=prophecy
 
-cat << EOF > /etc/marketplace/values_prometheus.yaml
-prometheus:
-  prometheusSpec:
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: default
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 50Gi
-    serviceMonitorSelector: {}
-    serviceMonitorNamespaceSelector:
-      matchLabels:
-        owner: prophecy
-EOF
+# cat << EOF > /etc/marketplace/values_prometheus.yaml
+# prometheus:
+#   prometheusSpec:
+#     storageSpec:
+#       volumeClaimTemplate:
+#         spec:
+#           storageClassName: default
+#           accessModes: ["ReadWriteOnce"]
+#           resources:
+#             requests:
+#               storage: 50Gi
+#     serviceMonitorSelector: {}
+#     serviceMonitorNamespaceSelector:
+#       matchLabels:
+#         owner: prophecy
+# EOF
 
-retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml --force
+# retry helm upgrade -i prometheus prometheus-community/kube-prometheus-stack -n platform -f /etc/marketplace/values_prometheus.yaml --force
 
 # Installing metrics-server
 retry kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.0/components.yaml
 
-retry helm upgrade -i loki grafana/loki-stack -n platform --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi --force
+retry helm upgrade -i loki grafana/loki-stack -n prophecy --create-namespace --set loki.persistence.enabled=true,loki.persistence.storageClassName=default,loki.persistence.size=200Gi --force
 
 if [ ${USE_CUSTOMER_PROVIDED_CERTIFICATE} == "True" ]; then
   kubectl create secret tls prophecy-wildcard-tls-secret -n cp --cert=tls.crt --key=tls.key
   kubectl create secret tls prophecy-wildcard-tls-secret -n dp --cert=tls.crt --key=tls.key
 fi
 
-eval "echo \"$(cat image-pull-secret-tpl.yaml)\"" > image-pull-secret.yaml
-retry kubectl apply -f image-pull-secret.yaml -n cp
-retry kubectl apply -f image-pull-secret.yaml -n dp
+# eval "echo \"$(cat image-pull-secret-tpl.yaml)\"" > image-pull-secret.yaml
+# retry kubectl apply -f image-pull-secret.yaml -n cp
+# retry kubectl apply -f image-pull-secret.yaml -n dp
 
-eval "echo \"$(cat values_cp_tpl.yaml )\"" > values_cp.yaml
-eval "echo \"$(cat values_dp_tpl.yaml )\"" > values_dp.yaml
+# eval "echo \"$(cat values_cp_tpl.yaml )\"" > values_cp.yaml
+# eval "echo \"$(cat values_dp_tpl.yaml )\"" > values_dp.yaml
 
-# Updating env logic
-TOTAL_LINES=`wc -l values_cp.yaml | awk '{print $1}'`
-head -n 60 values_cp.yaml > values_cp_temp.yaml
-echo "    SMTP_ENABLED: \"false\"" >> values_cp_temp.yaml
-echo "    METERING_ENABLED: \"true\"" >> values_cp_temp.yaml
-echo "    MIXPANEL_ENABLED: \"true\"" >> values_cp_temp.yaml
-echo "    SEARCH_ENABLED: \"true\"" >> values_cp_temp.yaml
-echo "    ENABLE_SEARCH_BOOTSTRAP: \"true\"" >> values_cp_temp.yaml
-tail -n $(($TOTAL_LINES - 60)) values_cp.yaml >> values_cp_temp.yaml
-mv values_cp_temp.yaml values_cp.yaml
-# Updating env logic
+# # Updating env logic
+# TOTAL_LINES=`wc -l values_cp.yaml | awk '{print $1}'`
+# head -n 60 values_cp.yaml > values_cp_temp.yaml
+# echo "    SMTP_ENABLED: \"false\"" >> values_cp_temp.yaml
+# echo "    METERING_ENABLED: \"true\"" >> values_cp_temp.yaml
+# echo "    MIXPANEL_ENABLED: \"true\"" >> values_cp_temp.yaml
+# echo "    SEARCH_ENABLED: \"true\"" >> values_cp_temp.yaml
+# echo "    ENABLE_SEARCH_BOOTSTRAP: \"true\"" >> values_cp_temp.yaml
+# tail -n $(($TOTAL_LINES - 60)) values_cp.yaml >> values_cp_temp.yaml
+# mv values_cp_temp.yaml values_cp.yaml
+# # Updating env logic
 
-retry curl -o prophecy.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-0.17.10.tgz
-retry curl -o prophecy-dataplane.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-dataplane-0.17.10.tgz
-retry curl -o athena-0.1.0.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/athena-0.1.0.tgz
-retry curl -o prophecy-backup-0.0.1.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-backup-0.0.1.tgz
+# retry curl -o prophecy.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-0.17.10.tgz
+# retry curl -o prophecy-dataplane.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-dataplane-0.17.10.tgz
+# retry curl -o athena-0.1.0.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/athena-0.1.0.tgz
+# retry curl -o prophecy-backup-0.0.1.tgz https://prophecy-charts.s3.us-west-2.amazonaws.com/stable/prophecy-backup-0.0.1.tgz
 
-retry helm upgrade -i cp ./prophecy.tgz -f values_cp.yaml -n cp --set prophecy.enablePathBasedRouting=true --set monitoring.enabled=true --force
-retry helm upgrade -i dp ./prophecy-dataplane.tgz -f values_dp.yaml -n dp --set dataplane.enablePathBasedRouting=true --set monitoring.enabled=true --force
+# retry helm upgrade -i cp ./prophecy.tgz -f values_cp.yaml -n cp --set prophecy.enablePathBasedRouting=true --set monitoring.enabled=true --force
+# retry helm upgrade -i dp ./prophecy-dataplane.tgz -f values_dp.yaml -n dp --set dataplane.enablePathBasedRouting=true --set monitoring.enabled=true --force
 
 
-retry helm upgrade -i -n cp athena ./athena-0.1.0.tgz --set athena.tag=0.14.7 --set prophecy.userCount=`echo ${INITIAL_USER_COUNT}` --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo prophecy.${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret --force
+# retry helm upgrade -i -n cp athena ./athena-0.1.0.tgz --set athena.tag=0.14.7 --set prophecy.userCount=`echo ${INITIAL_USER_COUNT}` --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo prophecy.${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret --force
+retry helm upgrade -i prophecy --namespace prophecy prophecy/prophecy-marketplace --version 0.1.7 --set customer.name=`echo ${CUSTOMER_NAME}` --set serviceAccount.create=true --set cloud.provider=AZURE --set prophecy.userCount=`echo ${INITIAL_USER_COUNT}` --set athena.adminPassword=`echo ${ADMIN_PASSWORD}` --set prophecy.rootUrl=`echo ${ROOT_URL}` --set prophecy.wildcardCertName=prophecy-wildcard-tls-secret
+retry helm upgrade -i -n prophecy backup ./prophecy-backup-0.0.1.tgz --set backup.pvc.create=true --force
 
-retry helm upgrade -i -n cp backup ./prophecy-backup-0.0.1.tgz --set backup.pvc.create=true --force
-
-retry helm upgrade -i -n dp backup ./prophecy-backup-0.0.1.tgz --set backup.pvc.create=true --force
+# retry helm upgrade -i -n dp backup ./prophecy-backup-0.0.1.tgz --set backup.pvc.create=true --force
 
 # retry helm upgrade -i federator prophecy/openidfederator --version 1.16.0 -n openidfederator
 
