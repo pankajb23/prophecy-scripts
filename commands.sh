@@ -185,3 +185,4 @@ retry helm upgrade -i -n dp backup ./prophecy-backup-0.0.1.tgz --set backup.pvc.
 kubectl label servicemonitor cp-metrics -n cp release=prometheus
 
 kubectl label servicemonitor dp-metrics -n dp release=prometheus
+
