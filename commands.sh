@@ -4,7 +4,7 @@ function fail {
   echo $1 >&2
   exit 1
 }
-
+# on george's ask :| 
 function retry {
   local n=1
   local max=5
